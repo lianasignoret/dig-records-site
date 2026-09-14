@@ -78,20 +78,19 @@
   .stage .hot:hover::after, .stage .hot:focus-visible::after { outline-color:var(--accent); }
   .stage .hot span { position:absolute; left:50%; bottom:6%; transform:translateX(-50%); background:var(--accent); color:#000; font-weight:700; font-size:12px; letter-spacing:1.2px; text-transform:uppercase; padding:6px 10px; border-radius:999px; opacity:0; transition:opacity .2s; white-space:nowrap; }
   .stage .hot:hover span, .stage .hot:focus-visible span { opacity:1; }
-  .stage.open .rack { transform:scale(3.2); opacity:0; pointer-events:none; }
-  .stage .close { position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity .45s ease .25s; }
+  .stage.open .rack { transform:scale(1.35); opacity:.25; pointer-events:none; }
+  .stage .close { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.92); opacity:0; pointer-events:none; transition:opacity .45s ease .15s; }
   .stage.open .close { opacity:1; pointer-events:auto; }
-  .stage.open { height:min(78vw, 640px); }
   .close .backdrop { position:absolute; inset:-40px; background-size:cover; background-position:center; filter:blur(28px) brightness(.55); }
-  .close .photo-wrap { position:absolute; left:50%; top:50%; height:100%; aspect-ratio:1; transform:translate(-50%,-50%); box-shadow:0 0 60px rgba(0,0,0,.6); }
+  .close .photo-wrap { position:absolute; left:50%; top:50%; height:min(92vh, 92vw); aspect-ratio:1; transform:translate(-50%,-50%) scale(.9); box-shadow:0 0 80px rgba(0,0,0,.8); transition:transform .5s cubic-bezier(.2,.8,.2,1) .1s; }
+  .stage.open .close .photo-wrap { transform:translate(-50%,-50%) scale(1); }
   .close .photo-wrap img.bg { position:absolute; inset:0; width:100%; height:100%; display:block; }
   /* the divider card: a cream label in a marker hand over the photo's own card, for the other five genres */
-  .close .card { position:absolute; left:10.4%; width:79.6%; top:60.4%; height:11.4%; background:#e6d9c4; box-shadow:inset 0 -6px 12px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; font-family:"Permanent Marker", "Marker Felt", "Comic Sans MS", cursive; font-size:calc(min(78vw, 640px) * .085); color:#111; letter-spacing:.06em; }
-  .close .stack { position:absolute; left:18.7%; width:61.8%; top:24.7%; height:22.4%; perspective:1100px; perspective-origin:50% -60%; }
+  .close .card { position:absolute; left:10.4%; width:79.6%; top:60.4%; height:11.4%; background:#e6d9c4; box-shadow:inset 0 -6px 12px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; font-family:"Permanent Marker", "Marker Felt", "Comic Sans MS", cursive; font-size:calc(min(92vh, 92vw) * .085); color:#111; letter-spacing:.06em; }
+  .close .stack { position:absolute; left:24%; width:52%; top:24.7%; height:22.4%; perspective:1100px; perspective-origin:50% -40%; }
   .close .sleeve { position:absolute; left:0; width:100%; bottom:0; aspect-ratio:1; transform-origin:50% 100%; transform-style:preserve-3d; will-change:transform; }
   .stage:not(.dragging) .sleeve { transition:transform .42s cubic-bezier(.2,.8,.2,1), opacity .3s; }
   .close .sleeve .face { position:absolute; inset:0; background:var(--c,#e9e2d0); color:var(--t,#111); box-shadow:0 0 0 1px rgba(0,0,0,.35), 0 18px 30px rgba(0,0,0,.5); display:flex; flex-direction:column; justify-content:flex-end; padding:5%; box-sizing:border-box; overflow:hidden; backface-visibility:hidden; }
-  .close .sleeve.flipped .face { transform:scaleY(-1); }
   .close .sleeve .face img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   .close .sleeve .face .a { font-size:.55em; letter-spacing:.14em; text-transform:uppercase; font-weight:700; position:relative; }
   .close .sleeve .face .t { font-size:1.1em; line-height:1; letter-spacing:-.02em; font-weight:700; margin-top:.2em; position:relative; }
@@ -299,7 +298,6 @@ function openCrate(i) {
     stack.appendChild(s); rec.el = s; cover(rec);
   });
   stage.classList.add('open'); layout();
-  stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 function closeCrate() { stage.classList.remove('open'); cur = -1; }
 function layout() {
@@ -308,9 +306,8 @@ function layout() {
   stack.style.fontSize = (w / 12) + 'px';
   c.r.forEach(function (rec, k) {
     var d = k - pos, z, y, rot, op = 1;
-    if (d >= 0) { z = -d * (w * 0.09); y = -d * (w * 0.02); rot = 0; op = d > 4.5 ? 0 : 1; }
-    else { var f = Math.min(1, -d); rot = -66 * f; z = w * 0.3 * f; y = 0; op = -d > 2.5 ? 0 : 1; }
-    rec.el.classList.toggle('flipped', d <= -0.5); // lying towards you: the artwork is mirrored so it reads upright
+    if (d >= 0) { z = -d * (w * 0.09); y = -d * (w * 0.02); rot = 30; op = d > 4.5 ? 0 : 1; } // standing sleeves lean back like the photo's
+    else { var f = Math.min(1, -d); rot = 30 - 100 * f; z = w * 0.14 * f; y = w * 0.02 * f; op = -d > 2.5 ? 0 : 1; }
     rec.el.style.transform = 'translate3d(0,' + y + 'px,' + z + 'px) rotateX(' + rot + 'deg)';
     rec.el.style.zIndex = String(1000 - Math.round(Math.abs(d) * 10) + (d < 0 ? 500 : 0));
     rec.el.style.opacity = op;
@@ -328,6 +325,8 @@ closeEl.addEventListener('wheel', function (e) { if (cur < 0) return; e.preventD
 document.getElementById('next').addEventListener('click', function () { var n = CRATES[cur].r.length; pos = Math.min(n - 1, Math.round(pos) + 1); layout(); });
 document.getElementById('prev').addEventListener('click', function () { pos = Math.max(0, Math.round(pos) - 1); layout(); });
 document.getElementById('back').addEventListener('click', closeCrate);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCrate(); });
+closeEl.addEventListener('click', function (e) { if (e.target === closeEl || e.target.id === 'backdrop') closeCrate(); });
 window.addEventListener('resize', layout);
 function cover(rec) {
   fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(rec[0] + ' ' + rec[1]) + '&entity=album&limit=1&country=FR').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
