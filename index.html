@@ -89,8 +89,9 @@
   .stage.open .close .photo-wrap { transform:translate(-50%,-50%) scale(1); }
   .close .photo-wrap img.bg { position:absolute; inset:0; width:100%; height:100%; display:block; }
   /* the divider card: a cream label in a marker hand over the photo's own card, for the other five genres */
-  .close .card { position:absolute; left:10.4%; width:79.6%; top:60.4%; height:11.4%; background:#e6d9c4; box-shadow:inset 0 -6px 12px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; font-family:"Permanent Marker", "Marker Felt", "Comic Sans MS", cursive; font-size:calc(min(92vh, 92vw) * .085); color:#111; letter-spacing:.06em; }
-  .close .stack { position:absolute; left:24%; width:52%; top:24.7%; height:22.4%; perspective:1100px; perspective-origin:50% -40%; }
+  .close .front { position:absolute; left:0; right:0; top:60%; bottom:0; background-size:100% auto; background-position:0 100%; z-index:3; }
+  .close .card { position:absolute; z-index:4; left:10.4%; width:79.6%; top:60.4%; height:11.4%; background:#e6d9c4; box-shadow:inset 0 -6px 12px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; font-family:"Permanent Marker", "Marker Felt", "Comic Sans MS", cursive; font-size:calc(min(92vh, 92vw) * .085); color:#111; letter-spacing:.06em; }
+  .close .stack { position:absolute; z-index:2; left:14%; width:72%; top:58.6%; height:22.4%; perspective:1100px; perspective-origin:50% -40%; }
   .close .sleeve { position:absolute; left:0; width:100%; bottom:0; aspect-ratio:1; transform-origin:50% 100%; transform-style:preserve-3d; will-change:transform; }
   .stage:not(.dragging) .sleeve { transition:transform .42s cubic-bezier(.2,.8,.2,1), opacity .3s; }
   .close .sleeve .face { position:absolute; inset:0; background:var(--c,#e9e2d0); color:var(--t,#111); box-shadow:0 0 0 1px rgba(0,0,0,.35), 0 18px 30px rgba(0,0,0,.5); display:flex; flex-direction:column; justify-content:flex-end; padding:5%; box-sizing:border-box; overflow:hidden; backface-visibility:hidden; }
@@ -140,6 +141,7 @@
           <div class="backdrop" id="backdrop"></div>
           <div class="photo-wrap">
             <img class="bg" src="crate.jpg" alt="">
+            <div class="front" id="front"></div>
             <div class="card" id="card"></div>
             <div class="stack" id="stack"></div>
           </div>
@@ -256,8 +258,8 @@
 // crate centres in the rack photo, as fractions of its width (measured on the photo)
 var CENTRES = [0.0875, 0.25, 0.4075, 0.57, 0.735, 0.905];
 var BOUNDS = [0, 0.168, 0.328, 0.488, 0.652, 0.82, 1];
-var PALETTE = [["#e9e2d0","#111"],["#111111","#e9e2d0"],["#FF3D1F","#111"],["#cfc4ad","#111"],["#1E1E1E","#FF3D1F"],["#e9e2d0","#FF3D1F"]];
-document.getElementById('backdrop').style.backgroundImage = 'url(' + JSON.stringify(document.querySelector('#close img.bg').getAttribute('src')) + ')';
+var PALETTE = [["#e9e2d0","#111"],["#e3dbc7","#111"],["#eee8da","#111"],["#dcd3bd","#111"],["#e6dfcc","#111"],["#d5cbb3","#111"]];
+document.getElementById('backdrop').style.backgroundImage = document.getElementById('front').style.backgroundImage = 'url(' + JSON.stringify(document.querySelector('#close img.bg').getAttribute('src')) + ')';
 var stage = document.getElementById('stage'), rackEl = stage.querySelector('.rack'), hots = document.getElementById('hots'), stack = document.getElementById('stack');
 var cur = -1, pos = 0, dragging = false, y0 = 0, p0 = 0;
 CRATES.forEach(function (c, i) {
@@ -290,8 +292,8 @@ function layout() {
   stack.style.fontSize = (w / 12) + 'px';
   c.r.forEach(function (rec, k) {
     var d = k - pos, z, y, rot, op = 1;
-    if (d >= 0) { z = -d * (w * 0.09); y = -d * (w * 0.02); rot = 30; op = d > 4.5 ? 0 : 1; } // standing sleeves lean back like the photo's
-    else { var f = Math.min(1, -d); rot = 30 - 100 * f; z = w * 0.14 * f; y = w * 0.02 * f; op = -d > 2.5 ? 0 : 1; }
+    if (d >= 0) { z = -d * (w * 0.028); y = -d * (w * 0.006); rot = 30; op = 1; } // standing sleeves lean back like the photo's, packed to the back of the crate
+    else { var f = Math.min(1, -d); rot = 30 - 58 * f; z = w * 0.05 * f - (-d - f) * w * 0.01; y = 0; op = 1; } // flipped sleeves lean on the front of the crate
     rec.el.style.transform = 'translate3d(0,' + y + 'px,' + z + 'px) rotateX(' + rot + 'deg)';
     rec.el.style.zIndex = String(1000 - Math.round(Math.abs(d) * 10) + (d < 0 ? 500 : 0));
     rec.el.style.opacity = op;
