@@ -67,6 +67,40 @@
   [data-fr], [data-en] { display:none; }
   html[lang="fr"] [data-fr], html[lang="en"] [data-en] { display:revert; }
   html[lang="fr"] span[data-fr], html[lang="en"] span[data-en] { display:inline; }
+  /* ---- the crates: a rack of boxes you dig through ---- */
+  .rack-wrap { margin-top:24px; }
+  .rack { display:flex; gap:10px; overflow-x:auto; padding:6px 2px 14px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .rack::-webkit-scrollbar { display:none; }
+  .crate { flex:0 0 auto; width:118px; height:96px; background:#2b1d12; border:1px solid #3a281a; border-top:6px solid #4a3320; position:relative; cursor:pointer; scroll-snap-align:start; transition:transform .25s ease; }
+  .crate:hover { transform:translateY(-4px); }
+  .crate.on { outline:2px solid var(--accent); outline-offset:2px; }
+  .crate .spines { position:absolute; left:8px; right:8px; bottom:8px; top:14px; display:flex; gap:2px; align-items:flex-end; }
+  .crate .spines i { flex:1; height:100%; background:#f0ead8; opacity:.85; }
+  .crate .spines i:nth-child(3n) { background:#d8d0bd; } .crate .spines i:nth-child(4n) { background:#1a1a1a; } .crate .spines i:nth-child(7n) { background:var(--accent); }
+  .crate .tag { position:absolute; left:50%; top:-14px; transform:translateX(-50%); background:#F2EFE8; color:#111; font-weight:700; font-size:11px; letter-spacing:1.2px; text-transform:uppercase; padding:5px 9px; white-space:nowrap; box-shadow:0 1px 0 #cfc8b6; }
+  .dig { margin-top:18px; display:grid; grid-template-columns:minmax(0,1fr); gap:18px; }
+  @media (min-width:700px) { .dig { grid-template-columns:1fr 1fr; align-items:start; } }
+  .box { position:relative; height:400px; background:#2b1d12; border:1px solid #3a281a; border-top:14px solid #4a3320; touch-action:none; user-select:-webkit-user-select:none; user-select:none; overflow:hidden; perspective:900px; perspective-origin:50% 20%; }
+  .box .floor { position:absolute; left:0; right:0; bottom:0; height:38%; background:#1f150c; }
+  .box:not(.dragging) .sleeve { transition: transform .38s cubic-bezier(.2,.8,.2,1), opacity .3s; }
+  .sleeve { position:absolute; left:50%; bottom:34px; width:220px; height:220px; margin-left:-110px; transform-style:preserve-3d; transform-origin:50% 100%; will-change:transform; }
+  .sleeve .face { position:absolute; inset:0; background:var(--c, #F2EFE8); color:var(--t, #111); box-shadow:0 0 0 1px rgba(0,0,0,.25), 0 10px 24px rgba(0,0,0,.45); display:flex; flex-direction:column; justify-content:flex-end; padding:16px; box-sizing:border-box; backface-visibility:hidden; overflow:hidden; }
+  .sleeve .face img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .sleeve .face .a { font-size:13px; letter-spacing:1.4px; text-transform:uppercase; font-weight:700; position:relative; }
+  .sleeve .face .t { font-size:26px; line-height:1; letter-spacing:-.8px; font-weight:700; margin-top:6px; position:relative; }
+  .sleeve .face .y { font-size:12px; margin-top:8px; opacity:.7; position:relative; }
+  .sleeve .face.img .a, .sleeve .face.img .t, .sleeve .face.img .y { color:#fff; text-shadow:0 1px 8px rgba(0,0,0,.7); }
+  .hint { position:absolute; left:0; right:0; top:14px; text-align:center; font-size:12px; letter-spacing:1.2px; text-transform:uppercase; color:#cfc8b6; opacity:.9; pointer-events:none; }
+  .box .tag { position:absolute; left:14px; top:14px; background:#F2EFE8; color:#111; font-weight:700; font-size:11px; letter-spacing:1.2px; text-transform:uppercase; padding:5px 9px; }
+  .box .count { position:absolute; right:14px; top:14px; color:#cfc8b6; font-size:12px; letter-spacing:1px; }
+  .box .nav { position:absolute; right:14px; bottom:14px; display:flex; gap:8px; }
+  .box .nav button { font:inherit; font-weight:600; font-size:13px; padding:8px 14px; border-radius:999px; border:0; background:rgba(0,0,0,.55); color:#fff; cursor:pointer; }
+  .pick { background:var(--surface); padding:22px; min-height:120px; }
+  .pick .kicker { margin-bottom:8px; }
+  .pick h3 { margin:0 0 4px; font-size:22px; letter-spacing:-.4px; }
+  .pick .meta { color:var(--ink2); font-size:14px; margin-bottom:12px; }
+  .pick p { font-size:15px; }
+  .pick .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
 </style>
 
 <header>
@@ -127,10 +161,27 @@
   <section id="bacs">
     <div class="wrap">
       <div class="kicker"><span data-fr>Les bacs</span><span data-en>The crates</span></div>
-      <h2><span data-fr>Ce qu'on a en bac</span><span data-en>What is in the crates</span></h2>
-      <p class="lead"><span data-fr>Du vinyle, d'occasion et neuf, choisi disque par disque. LP et 45 tours.</span><span data-en>Vinyl, second-hand and new, chosen record by record. LPs and 45s.</span></p>
-      <div class="chips" id="genres">
-        <span class="chip">Soul</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Hip-hop</span><span class="chip">Rock</span><span class="chip">Reggae</span><span class="chip">Afro</span><span class="chip"><span data-fr>Brésilien</span><span data-en>Brazilian</span></span><span class="chip"><span data-fr>Électronique</span><span data-en>Electronic</span></span><span class="chip">Chanson</span><span class="chip ph">[à compléter]</span>
+      <h2><span data-fr>Fouillez les bacs</span><span data-en>Dig the crates</span></h2>
+      <p class="lead"><span data-fr>Dix bacs, du vinyle d'occasion et neuf, choisi disque par disque. Ouvrez un bac et feuilletez.</span><span data-en>Ten crates, second-hand and new vinyl chosen record by record. Open a crate and flip through.</span></p>
+      <div class="rack-wrap">
+        <div class="rack" id="rack" aria-label="Les bacs"></div>
+        <div class="dig">
+          <div class="box" id="box">
+            <div class="floor"></div>
+            <div class="tag" id="box-tag"></div>
+            <div class="count" id="box-count"></div>
+            <div class="hint"><span data-fr>Glisse vers le haut pour feuilleter</span><span data-en>Drag up to flip through</span></div>
+            <div id="stack"></div>
+            <div class="nav"><button type="button" id="prev" aria-label="Previous">‹</button><button type="button" id="next" aria-label="Next">›</button></div>
+          </div>
+          <div class="pick" id="pick">
+            <div class="kicker"><span data-fr>Sous le doigt</span><span data-en>Under your thumb</span></div>
+            <h3 id="pick-title"></h3>
+            <div class="meta" id="pick-meta"></div>
+            <p id="pick-note"></p>
+            <div class="row"><a class="btn secondary" href="https://instagram.com/dig_records" target="_blank" rel="noopener"><span data-fr>Le mettre de côté</span><span data-en>Ask us to hold it</span></a></div>
+          </div>
+        </div>
       </div>
       <p><span data-fr>Les arrivages sont annoncés chaque semaine sur Instagram.</span><span data-en>New arrivals are announced every week on Instagram.</span></p>
     </div>
@@ -208,5 +259,91 @@
   setLang(saved || ((navigator.language || 'fr').slice(0, 2) === 'en' ? 'en' : 'fr'));
 </script>
 
+
+<script>
+// The crates. Each genre is a crate; open one and dig: drag up to tip the front sleeve towards you and move on,
+// like the box in the Dig app. Sleeves are typographic (cream, black, orange) and take the real cover from Apple's
+// catalogue when it answers. Records are examples of what the crates hold; Laurent edits this list.
+var CRATES = [
+ {g:"Soul", fr:"Soul", r:[["Marvin Gaye","What's Going On",1971,"Tamla"],["Curtis Mayfield","Superfly",1972,"Curtom"],["Bill Withers","Still Bill",1972,"Sussex"],["Al Green","Call Me",1973,"Hi Records"],["Aretha Franklin","Lady Soul",1968,"Atlantic"],["Otis Redding","Otis Blue",1965,"Volt"],["Donny Hathaway","Everything Is Everything",1970,"Atco"],["Roberta Flack","First Take",1969,"Atlantic"]]},
+ {g:"Funk", fr:"Funk", r:[["James Brown","Sex Machine",1970,"King"],["Parliament","Mothership Connection",1975,"Casablanca"],["The Meters","Rejuvenation",1974,"Reprise"],["Sly & The Family Stone","There's a Riot Goin' On",1971,"Epic"],["Betty Davis","They Say I'm Different",1974,"Just Sunshine"],["Funkadelic","Maggot Brain",1971,"Westbound"],["Roy Ayers Ubiquity","Everybody Loves the Sunshine",1976,"Polydor"],["Cymande","Cymande",1972,"Janus"]]},
+ {g:"Jazz", fr:"Jazz", r:[["John Coltrane","A Love Supreme",1965,"Impulse!"],["Miles Davis","Kind of Blue",1959,"Columbia"],["Alice Coltrane","Journey in Satchidananda",1971,"Impulse!"],["Herbie Hancock","Head Hunters",1973,"Columbia"],["Lee Morgan","The Sidewinder",1964,"Blue Note"],["Pharoah Sanders","Karma",1969,"Impulse!"],["Nina Simone","Pastel Blues",1965,"Philips"],["Charles Mingus","Mingus Ah Um",1959,"Columbia"]]},
+ {g:"Hip-hop", fr:"Hip-hop", r:[["Nas","Illmatic",1994,"Columbia"],["A Tribe Called Quest","The Low End Theory",1991,"Jive"],["Madvillain","Madvillainy",2004,"Stones Throw"],["J Dilla","Donuts",2006,"Stones Throw"],["Wu-Tang Clan","Enter the Wu-Tang (36 Chambers)",1993,"Loud"],["De La Soul","3 Feet High and Rising",1989,"Tommy Boy"],["MF DOOM","Mm..Food",2004,"Rhymesayers"],["IAM","L'École du micro d'argent",1997,"Delabel"]]},
+ {g:"Rock", fr:"Rock", r:[["The Velvet Underground","The Velvet Underground & Nico",1967,"Verve"],["Television","Marquee Moon",1977,"Elektra"],["Neil Young","Harvest",1972,"Reprise"],["Big Star","#1 Record",1972,"Ardent"],["Patti Smith","Horses",1975,"Arista"],["The Stooges","Fun House",1970,"Elektra"],["Pixies","Doolittle",1989,"4AD"],["Serge Gainsbourg","Histoire de Melody Nelson",1971,"Philips"]]},
+ {g:"Reggae", fr:"Reggae", r:[["Bob Marley & The Wailers","Exodus",1977,"Island"],["Augustus Pablo","King Tubbys Meets Rockers Uptown",1976,"Clocktower"],["Burning Spear","Marcus Garvey",1975,"Island"],["Lee Perry & The Upsetters","Super Ape",1976,"Island"],["Gregory Isaacs","Night Nurse",1982,"Island"],["Toots & The Maytals","Funky Kingston",1973,"Dragon"],["The Congos","Heart of the Congos",1977,"Black Ark"],["Horace Andy","Skylarking",1972,"Studio One"]]},
+ {g:"Afro", fr:"Afro", r:[["Fela Kuti","Zombie",1976,"Coconut"],["Manu Dibango","Soul Makossa",1972,"Fiesta"],["Ebo Taylor","Twer Nyame",1978,"Essiebons"],["William Onyeabor","Atomic Bomb",1978,"Wilfilms"],["Mulatu Astatke","Mulatu of Ethiopia",1972,"Worthy"],["Orchestra Baobab","Pirates Choice",1982,"MCA"],["Tony Allen","Jealousy",1975,"Soundworkshop"],["Francis Bebey","Akwaaba",1985,"Original Music"]]},
+ {g:"Brésilien", fr:"Brésilien", en:"Brazilian", r:[["Jorge Ben","Samba Esquema Novo",1963,"Philips"],["Elis Regina & Tom Jobim","Elis & Tom",1974,"Philips"],["Caetano Veloso","Transa",1972,"Philips"],["Os Mutantes","Os Mutantes",1968,"Polydor"],["Milton Nascimento","Clube da Esquina",1972,"EMI-Odeon"],["Gal Costa","Gal Costa",1969,"Philips"],["Marcos Valle","Previsão do Tempo",1973,"Odeon"],["Arthur Verocai","Arthur Verocai",1972,"Continental"]]},
+ {g:"Électronique", fr:"Électronique", en:"Electronic", r:[["Kraftwerk","Trans-Europe Express",1977,"Kling Klang"],["Daft Punk","Discovery",2001,"Virgin"],["Aphex Twin","Selected Ambient Works 85–92",1992,"Apollo"],["Laurent Garnier","Unreasonable Behaviour",2000,"F Communications"],["Boards of Canada","Music Has the Right to Children",1998,"Warp"],["Larry Heard","Sceneries Not Songs",1994,"Black Market"],["Jeff Mills","Waveform Transmission Vol. 1",1992,"Tresor"],["Air","Moon Safari",1998,"Source"]]},
+ {g:"Chanson", fr:"Chanson", r:[["Georges Brassens","Les Copains d'abord",1964,"Philips"],["Jacques Brel","Ne me quitte pas",1972,"Barclay"],["Françoise Hardy","La Question",1971,"Sonopresse"],["Léo Ferré","Amour Anarchie",1970,"Barclay"],["Barbara","L'Aigle noir",1970,"Philips"],["Claude Nougaro","Locomotive d'or",1973,"Philips"],["Brigitte Fontaine","Comme à la radio",1969,"Saravah"],["Jean Ferrat","Ma France",1969,"Barclay"]]}
+];
+var PALETTE = [["#F2EFE8","#111"],["#111111","#F2EFE8"],["#FF3D1F","#111"],["#D8D0BD","#111"],["#1E1E1E","#FF3D1F"],["#F2EFE8","#FF3D1F"]];
+var cur = 0, pos = 0, lang = function(){ return document.documentElement.getAttribute('lang') || 'fr'; };
+var rack = document.getElementById('rack'), stack = document.getElementById('stack');
+CRATES.forEach(function (c, i) {
+  var el = document.createElement('div'); el.className = 'crate'; el.setAttribute('role','button'); el.tabIndex = 0;
+  el.innerHTML = '<div class="tag"></div><div class="spines">' + '<i></i>'.repeat(14) + '</div>';
+  el.addEventListener('click', function(){ openCrate(i); el.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); });
+  el.addEventListener('keydown', function(e){ if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openCrate(i); } });
+  rack.appendChild(el); c.el = el;
+});
+function label(c){ return lang()==='en' && c.en ? c.en : c.fr; }
+function relabel(){ CRATES.forEach(function(c){ c.el.querySelector('.tag').textContent = label(c); }); document.getElementById('box-tag').textContent = label(CRATES[cur]); }
+function openCrate(i) {
+  cur = i; pos = 0;
+  CRATES.forEach(function(c, k){ c.el.classList.toggle('on', k===i); });
+  stack.innerHTML = '';
+  var c = CRATES[i];
+  c.r.forEach(function (rec, k) {
+    var p = PALETTE[(k + i) % PALETTE.length];
+    var s = document.createElement('div'); s.className = 'sleeve'; s.style.setProperty('--c', p[0]); s.style.setProperty('--t', p[1]);
+    s.innerHTML = '<div class="face"><div class="a"></div><div class="t"></div><div class="y"></div></div>';
+    s.querySelector('.a').textContent = rec[0]; s.querySelector('.t').textContent = rec[1]; s.querySelector('.y').textContent = rec[2] + ' · ' + rec[3];
+    s.addEventListener('click', function(){ if (Math.round(pos) !== k) { pos = k; layout(); show(); } });
+    stack.appendChild(s); rec.el = s;
+    cover(rec);
+  });
+  relabel(); layout(); show();
+}
+function layout() {
+  var c = CRATES[cur], n = c.r.length;
+  c.r.forEach(function (rec, k) {
+    var d = k - pos; // >0: behind the front, <0: already flipped forward
+    var z, y, rot, x, op = 1;
+    if (d >= 0) { z = -d * 26; y = -d * 6; rot = 0; x = 0; op = d > 5.5 ? 0 : 1; }
+    else { var f = Math.min(1, -d); rot = -78 * f; z = 40 + 18 * Math.min(1, -d - 0.0); y = 0; x = 0; op = -d > 3.5 ? 0 : 1; }
+    rec.el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateX(' + rot + 'deg)';
+    rec.el.style.zIndex = String(1000 - Math.round(Math.abs(d) * 10) + (d < 0 ? 500 : 0));
+    rec.el.style.opacity = op;
+  });
+  document.getElementById('box-count').textContent = (Math.min(n, Math.round(pos) + 1)) + ' / ' + n;
+}
+function show() {
+  var rec = CRATES[cur].r[Math.max(0, Math.min(CRATES[cur].r.length - 1, Math.round(pos)))];
+  document.getElementById('pick-title').textContent = rec[1];
+  document.getElementById('pick-meta').textContent = rec[0] + ' · ' + rec[2] + ' · ' + rec[3];
+  var note = document.getElementById('pick-note');
+  note.textContent = lang()==='en' ? 'One of the records the ' + label(CRATES[cur]).toLowerCase() + ' crate is for. Come and hear it.' : 'Un des disques pour lesquels le bac ' + label(CRATES[cur]).toLowerCase() + ' existe. Venez l’écouter.';
+}
+// drag: up = next
+var box = document.getElementById('box'), dragging = false, y0 = 0, p0 = 0;
+box.addEventListener('pointerdown', function(e){ if (e.target.closest('.nav')) return; dragging = true; box.classList.add('dragging'); y0 = e.clientY; p0 = pos; box.setPointerCapture(e.pointerId); });
+box.addEventListener('pointermove', function(e){ if (!dragging) return; var n = CRATES[cur].r.length; pos = Math.max(0, Math.min(n - 1, p0 + (y0 - e.clientY) / 140)); layout(); });
+function settle(){ if (!dragging) return; dragging = false; box.classList.remove('dragging'); pos = Math.round(pos); layout(); show(); }
+box.addEventListener('pointerup', settle); box.addEventListener('pointercancel', settle);
+box.addEventListener('wheel', function(e){ e.preventDefault(); var n = CRATES[cur].r.length; pos = Math.max(0, Math.min(n - 1, pos + (e.deltaY > 0 ? 1 : -1))); layout(); show(); }, {passive:false});
+document.getElementById('next').addEventListener('click', function(){ var n = CRATES[cur].r.length; pos = Math.min(n - 1, Math.round(pos) + 1); layout(); show(); });
+document.getElementById('prev').addEventListener('click', function(){ pos = Math.max(0, Math.round(pos) - 1); layout(); show(); });
+// real covers from Apple's catalogue when it answers (no key); the typographic sleeve stays underneath
+function cover(rec) {
+  var q = encodeURIComponent(rec[0] + ' ' + rec[1]);
+  fetch('https://itunes.apple.com/search?term=' + q + '&entity=album&limit=1&country=FR').then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+    var u = j && j.results && j.results[0] && j.results[0].artworkUrl100; if (!u) return;
+    var img = new Image(); img.alt = ''; img.src = u.replace('100x100bb', '600x600bb');
+    img.onload = function(){ var f = rec.el.querySelector('.face'); f.insertBefore(img, f.firstChild); f.classList.add('img'); };
+  }).catch(function(){});
+}
+openCrate(0);
+var _setLang = window.setLang; window.setLang = function(l){ _setLang(l); relabel(); show(); };
+</script>
 </body>
 </html>
