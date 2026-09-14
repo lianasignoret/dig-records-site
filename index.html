@@ -360,7 +360,8 @@ function settle(e) {
   animateTo(target);
 }
 closeEl.addEventListener('pointerup', settle); closeEl.addEventListener('pointercancel', settle);
-closeEl.addEventListener('wheel', function (e) { if (cur < 0) return; e.preventDefault(); if (anim || Math.abs(e.deltaY) < 8) return; animateTo(Math.round(pos) + (e.deltaY > 0 ? 1 : -1)); }, { passive: false });
+// Trackpad: two fingers swiped towards you (natural scrolling, so a negative deltaY) pulls the record out, like the drag.
+closeEl.addEventListener('wheel', function (e) { if (cur < 0) return; e.preventDefault(); if (anim || Math.abs(e.deltaY) < 8) return; animateTo(Math.round(pos) + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
 document.getElementById('next').addEventListener('click', function () { animateTo(Math.round(pos) + 1); });
 document.getElementById('prev').addEventListener('click', function () { animateTo(Math.round(pos) - 1); });
 document.getElementById('back').addEventListener('click', closeCrate);
