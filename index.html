@@ -37,7 +37,7 @@
   .btn { display:inline-block; font-weight:600; font-size:15px; padding:14px 24px; border-radius:999px; background:var(--accent); color:#000; }
   .btn.secondary { background:var(--surface2); color:var(--ink); }
   .btn:hover { text-decoration:none; opacity:.9; }
-  .hero { padding-top:56px; }
+  .hero { padding-top:56px; padding-bottom:40px; border-bottom:0; }
   .hero .open { font-size:15px; color:var(--ink2); margin-bottom:28px; }
   .hero .fifty { font-size:22px; color:var(--ink); letter-spacing:-.3px; margin:0 0 28px; }
   .photo { width:100%; aspect-ratio:1; background:var(--surface); margin-top:40px; display:flex; align-items:center; justify-content:center; color:var(--ink3); font-size:13px; overflow:hidden; }
@@ -121,7 +121,17 @@
 </header>
 
 <main id="top">
-<section id="bacs" class="first">
+<section class="hero">
+    <div class="wrap">
+      <div class="kicker"><span data-fr>Disquaire éclectique, Rennes</span><span data-en>An eclectic record store, Rennes</span></div>
+      <h1><span data-fr>Deep beats &amp; warm vibes, pour le corps et pour l'âme, sur du vinyle original.</span><span data-en>Deep beats &amp; warm vibes for your body &amp; your soul on original glorious vinyl.</span></h1>
+      <div class="open"><span data-fr>Pour les vinyl heads qui creusent plus loin. Ouverture cet automne, <span class="ph">[date]</span>.</span><span data-en>For the vinyl heads who dig deeper. Opening this autumn, <span class="ph">[date]</span>.</span></div>
+      <p class="fifty"><span data-fr>Cinquante ans dans les bacs.</span><span data-en>Fifty years in the crates.</span></p>
+      <a class="btn" href="#visite"><span data-fr>Venir nous voir</span><span data-en>Come and see us</span></a>
+    </div>
+  </section>
+
+<section id="bacs" class="first" style="padding-top:0">
       <div class="stage" id="stage" aria-label="Les bacs">
         <div class="rack"><div class="prompt"><span data-fr>Touchez un bac</span><span data-en>Tap a crate</span></div><img src="racks.jpg" alt="Six bacs de disques: soul, funk, jazz, hip-hop, reggae, Brazil"><div id="hots"></div></div>
         <div class="close" id="close">
@@ -142,16 +152,6 @@
       <p class="lead"><span data-fr>Six bacs. Ouvrez-en un, feuilletez.</span><span data-en>Six crates. Open one, flip through.</span></p>
       <p style="margin-top:14px"><span data-fr>Juste pour le plaisir de fouiller. Les vrais bacs sont en boutique, et changent chaque semaine.</span><span data-en>Just for the pleasure of digging. The real crates are in the shop, and change every week.</span></p>
       <p><span data-fr>Les arrivages sont annoncés chaque semaine sur Instagram.</span><span data-en>New arrivals are announced every week on Instagram.</span></p>
-    </div>
-  </section>
-
-<section class="hero">
-    <div class="wrap">
-      <div class="kicker"><span data-fr>Disquaire éclectique, Rennes</span><span data-en>An eclectic record store, Rennes</span></div>
-      <h1><span data-fr>Deep beats &amp; warm vibes, pour le corps et pour l'âme, sur du vinyle original.</span><span data-en>Deep beats &amp; warm vibes for your body &amp; your soul on original glorious vinyl.</span></h1>
-      <div class="open"><span data-fr>Pour les vinyl heads qui creusent plus loin. Ouverture cet automne, <span class="ph">[date]</span>.</span><span data-en>For the vinyl heads who dig deeper. Opening this autumn, <span class="ph">[date]</span>.</span></div>
-      <p class="fifty"><span data-fr>Cinquante ans dans les bacs.</span><span data-en>Fifty years in the crates.</span></p>
-      <a class="btn" href="#visite"><span data-fr>Venir nous voir</span><span data-en>Come and see us</span></a>
     </div>
   </section>
 
