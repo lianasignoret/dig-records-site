@@ -268,7 +268,7 @@ var cur = -1, pos = 0, dragging = false, y0 = 0, p0 = 0, yLast = 0, tLast = 0, v
 // Same motion as the box in the Dig app (src/components/dig-box.tsx): one value, `pos`, the fractional index of the
 // record at the front. Pull the front record towards you (drag down) and it tips about its bottom edge and drops
 // into the crate; the one behind steps forward. Everything is a function of (index - pos), no transitions.
-var BEHIND = 2, TIP_DEG = 80, SETTLE_MS = 1400;
+var BEHIND = 2, TIP_DEG = 80, SETTLE_MS = 1400, lastWheel = 0;
 CRATES.forEach(function (c, i) {
   var b = document.createElement('button'); b.type = 'button'; b.className = 'hot';
   b.style.left = (BOUNDS[i] * 100) + '%'; b.style.width = ((BOUNDS[i + 1] - BOUNDS[i]) * 100) + '%';
@@ -361,7 +361,7 @@ function settle(e) {
 }
 closeEl.addEventListener('pointerup', settle); closeEl.addEventListener('pointercancel', settle);
 // Trackpad: two fingers swiped towards you (natural scrolling, so a negative deltaY) pulls the record out, like the drag.
-closeEl.addEventListener('wheel', function (e) { if (cur < 0) return; e.preventDefault(); if (anim || Math.abs(e.deltaY) < 8) return; animateTo(Math.round(pos) + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
+closeEl.addEventListener('wheel', function (e) { if (cur < 0) return; e.preventDefault(); if (Math.abs(e.deltaY) < 8 || e.timeStamp - lastWheel < 900) return; lastWheel = e.timeStamp; animateTo(Math.round(pos) + (e.deltaY < 0 ? 1 : -1)); }, { passive: false }); // one flip per swipe: a swipe is a burst of wheel events
 document.getElementById('next').addEventListener('click', function () { animateTo(Math.round(pos) + 1); });
 document.getElementById('prev').addEventListener('click', function () { animateTo(Math.round(pos) - 1); });
 document.getElementById('back').addEventListener('click', closeCrate);
