@@ -98,6 +98,8 @@
   .close .photo-wrap { cursor:grab; }
   .stage.dragging .photo-wrap { cursor:grabbing; }
   .close .sleeve .face .a { font-size:.55em; letter-spacing:.14em; text-transform:uppercase; font-weight:700; position:relative; }
+  .close .sleeve .face .top { position:absolute; left:0; right:0; top:0; padding:.35em 6%; font-size:.5em; letter-spacing:.12em; text-transform:uppercase; font-weight:700; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .close .sleeve .face.img .top { display:none; }
   .close .sleeve .face .t { font-size:1.1em; line-height:1; letter-spacing:-.02em; font-weight:700; margin-top:.2em; position:relative; }
   .close .sleeve .face.img .a, .close .sleeve .face.img .t { color:#fff; text-shadow:0 1px 8px rgba(0,0,0,.8); }
   .close .ui { position:absolute; left:0; right:0; top:0; display:flex; justify-content:space-between; align-items:center; padding:14px 16px; pointer-events:none; }
@@ -109,6 +111,11 @@
   .close .name b { display:block; font-size:18px; letter-spacing:-.3px; }
   .close .name small { font-size:13px; color:#e9e2d0; }
   .stage.dragging { cursor:grabbing; }
+  .close .side { position:absolute; top:50%; transform:translateY(-50%); z-index:60; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 12px; border:0; background:rgba(0,0,0,.55); color:#fff; border-radius:16px; cursor:pointer; font:inherit; }
+  .close .side span { font-size:30px; line-height:1; }
+  .close .side small { font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:#e9e2d0; }
+  .close .side.left { left:16px; } .close .side.right { right:16px; }
+  @media (max-width:640px) { .close .side { top:auto; bottom:64px; transform:none; } }
 </style>
 
 <header>
@@ -148,7 +155,9 @@
           </div>
           <div class="ui"><span class="hint"><span data-fr>Tirez le disque vers vous, ou cliquez, pour feuilleter</span><span data-en>Pull the record towards you, or click, to flip through</span></span><button type="button" id="back"><span data-fr>Refermer</span><span data-en>Close</span></button></div>
           <div class="name"><b id="pick-title"></b><small id="pick-meta"></small></div>
-          <div class="nav"><button type="button" id="prev" aria-label="Previous">‹</button><button type="button" id="next" aria-label="Next">›</button></div>
+          <div class="nav"><button type="button" id="prev" aria-label="Previous record">↑</button><button type="button" id="next" aria-label="Next record">↓</button></div>
+          <button type="button" class="side left" id="crate-prev"><span>‹</span><small id="crate-prev-name"></small></button>
+          <button type="button" class="side right" id="crate-next"><span>›</span><small id="crate-next-name"></small></button>
         </div>
       </div>
     <div class="wrap" style="padding-top:28px">
@@ -266,7 +275,10 @@ var cur = -1, pos = 0, dragging = false, y0 = 0, p0 = 0, yLast = 0, tLast = 0, v
 // Same motion as the box in the Dig app (src/components/dig-box.tsx): one value, `pos`, the fractional index of the
 // record at the front. Pull the front record towards you (drag down) and it tips about its bottom edge and drops
 // into the crate; the one behind steps forward. Everything is a function of (index - pos), no transitions.
-var BEHIND = 2, TIP_DEG = 80, SETTLE_MS = 1400, lastWheel = 0;
+var BEHIND = 12, TIP_DEG = 80, SETTLE_MS = 1400, lastWheel = 0, pile = [];
+// The pile behind the record in hand is drawn from the crate's own records, twelve deep, each peeking out above the
+// one in front like the printed pile in the photo, which it covers. Blank cream sleeves fill the back once the crate
+// runs low, so the box always looks full.
 CRATES.forEach(function (c, i) {
   var b = document.createElement('button'); b.type = 'button'; b.className = 'hot';
   b.style.left = (BOUNDS[i] * 100) + '%'; b.style.width = ((BOUNDS[i + 1] - BOUNDS[i]) * 100) + '%';
@@ -279,22 +291,30 @@ function openCrate(i) {
   rackEl.style.transformOrigin = (CENTRES[i] * 100) + '% 62%';
   document.getElementById('card').textContent = CRATES[i].g.toUpperCase();
   document.getElementById('card').style.visibility = i === 0 ? 'hidden' : 'visible'; // the photo's own card already says SOUL
-  stack.innerHTML = '';
-  CRATES[i].r.forEach(function (rec, k) {
+  stack.innerHTML = ''; coverQueue = [];
+  pile = CRATES[i].r.slice();
+  for (var b = 0; b < BEHIND; b++) pile.push(['', '']); // blanks at the back
+  pile.forEach(function (rec, k) {
     var p = PALETTE[(k + i) % PALETTE.length];
     var s = document.createElement('div'); s.className = 'sleeve'; s.style.setProperty('--c', p[0]); s.style.setProperty('--t', p[1]);
-    s.innerHTML = '<div class="face"><div class="a"></div><div class="t"></div></div>';
-    s.querySelector('.a').textContent = rec[0]; s.querySelector('.t').textContent = rec[1];
-    stack.appendChild(s); rec.el = s; rec.req = false;
+    s.innerHTML = '<div class="face"><div class="top"></div><div class="a"></div><div class="t"></div></div>';
+    s.querySelector('.top').textContent = rec[0]; s.querySelector('.a').textContent = rec[0]; s.querySelector('.t').textContent = rec[1];
+    stack.appendChild(s); rec.el = s; rec.req = !rec[0];
   });
+  document.getElementById('crate-prev-name').textContent = CRATES[(i + CRATES.length - 1) % CRATES.length].g;
+  document.getElementById('crate-next-name').textContent = CRATES[(i + 1) % CRATES.length].g;
   stage.classList.add('open'); layout();
 }
+// Left and right move to the neighbouring crate without closing this one.
+function switchCrate(dir) { if (cur < 0) return; openCrate((cur + dir + CRATES.length) % CRATES.length); }
+document.getElementById('crate-prev').addEventListener('click', function () { switchCrate(-1); });
+document.getElementById('crate-next').addEventListener('click', function () { switchCrate(1); });
 function closeCrate() { stage.classList.remove('open'); stopAnim(); cur = -1; }
 function layout() {
   if (cur < 0) return;
   var c = CRATES[cur], n = c.r.length, w = stack.clientWidth || 300;
   stack.style.fontSize = (w / 12) + 'px';
-  c.r.forEach(function (rec, k) {
+  pile.forEach(function (rec, k) {
     var d = k - pos, tf, op = 1, dim = 0;
     if (d < 0) { // on its way out: tips towards you about its bottom edge, inside the crate, and slips behind the card
       var f = Math.min(1, -d);
@@ -302,15 +322,15 @@ function layout() {
       rec.el.style.opacity = d <= -1 ? 0 : 1; rec.el.style.zIndex = String(1500 + Math.round(d * 10));
       dim = f < 0.5 ? 0 : (f - 0.5) * 1.4;
       rec.el.firstChild.style.filter = dim ? 'brightness(' + (1 - dim).toFixed(2) + ')' : '';
-    } else { // at the front, or peeking out behind it
+    } else { // at the front, or in the pile behind it, each one a little higher and a touch wider than the one in front
       var q = Math.min(d, BEHIND + 1);
-      tf = 'translate3d(0,' + (-q * w * 0.028) + 'px,0) scale(' + (1 - 0.035 * q) + ')';
-      op = d > BEHIND + 0.5 ? 0 : 1; dim = Math.min(0.55, 0.22 * q);
+      tf = 'translate3d(0,' + (-q * w * 0.027) + 'px,0) scale(' + (1 + 0.004 * q) + ')';
+      op = d > BEHIND + 0.5 ? 0 : 1; dim = Math.min(0.4, 0.035 * q);
       rec.el.style.transform = tf; rec.el.style.opacity = op;
       rec.el.style.zIndex = String(1000 - Math.round(d * 10));
       rec.el.firstChild.style.filter = dim ? 'brightness(' + (1 - dim).toFixed(2) + ')' : '';
     }
-    if (Math.abs(d) < 5 && !rec.req) { rec.req = true; cover(rec); }
+    if (d > -1.5 && d < BEHIND + 1.5 && !rec.req) { rec.req = true; coverQueue.push({rec: rec, d: Math.abs(d)}); pump(); }
   });
   var rec = c.r[Math.max(0, Math.min(n - 1, Math.round(pos)))];
   document.getElementById('pick-title').textContent = rec[1];
@@ -360,10 +380,19 @@ closeEl.addEventListener('wheel', function (e) { if (cur < 0) return; e.preventD
 document.getElementById('next').addEventListener('click', function () { animateTo(Math.round(pos) + 1); });
 document.getElementById('prev').addEventListener('click', function () { animateTo(Math.round(pos) - 1); });
 document.getElementById('back').addEventListener('click', closeCrate);
-document.addEventListener('keydown', function (e) { if (cur < 0) return; if (e.key === 'Escape') closeCrate(); if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); animateTo(Math.round(pos) + 1); } if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); animateTo(Math.round(pos) - 1); } });
+document.addEventListener('keydown', function (e) { if (cur < 0) return; if (e.key === 'Escape') closeCrate(); if (e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); animateTo(Math.round(pos) + 1); } if (e.key === 'ArrowUp') { e.preventDefault(); animateTo(Math.round(pos) - 1); } if (e.key === 'ArrowRight') { e.preventDefault(); switchCrate(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); switchCrate(-1); } });
 window.addEventListener('resize', layout);
+// Covers come from Apple's catalogue a couple at a time, nearest the front first, so opening a crate does not fire
+// fourteen requests at once and get throttled.
+var coverQueue = [], inflight = 0;
+function pump() {
+  if (inflight >= 2 || !coverQueue.length) return;
+  coverQueue.sort(function (a, b) { return a.d - b.d; });
+  var job = coverQueue.shift(); inflight++;
+  cover(job.rec).then(function () { inflight--; setTimeout(pump, 150); });
+}
 function cover(rec) {
-  fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(rec[0] + ' ' + rec[1]) + '&entity=album&limit=1&country=FR').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+  return fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(rec[0] + ' ' + rec[1]) + '&entity=album&limit=1&country=FR').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
     var u = j && j.results && j.results[0] && j.results[0].artworkUrl100; if (!u) return;
     var img = new Image(); img.alt = ''; img.src = u.replace('100x100bb', '600x600bb');
     img.onload = function () { var f = rec.el.querySelector('.face'); f.insertBefore(img, f.firstChild); f.classList.add('img'); };
