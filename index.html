@@ -248,18 +248,11 @@
 </script>
 
 
+<script src="crates.js"></script>
 <script>
 // The crates: a photo of the rack, six hotspots; opening one flies into the close-up of a single crate, where
 // sleeves stand in 3D and tip towards you as you drag, like the box in the Dig app. The records are only what
 // each genre feels like (covers from Apple's catalogue, no key), not the shop's stock.
-var CRATES = [
- {g:"Soul", r:[["Marvin Gaye","What's Going On"],["Curtis Mayfield","Superfly"],["Bill Withers","Still Bill"],["Al Green","Call Me"],["Aretha Franklin","Lady Soul"],["Otis Redding","Otis Blue"]]},
- {g:"Funk", r:[["James Brown","Sex Machine"],["Parliament","Mothership Connection"],["The Meters","Rejuvenation"],["Sly & The Family Stone","There's a Riot Goin' On"],["Betty Davis","They Say I'm Different"],["Cymande","Cymande"]]},
- {g:"Jazz", r:[["John Coltrane","A Love Supreme"],["Miles Davis","Kind of Blue"],["Alice Coltrane","Journey in Satchidananda"],["Herbie Hancock","Head Hunters"],["Lee Morgan","The Sidewinder"],["Pharoah Sanders","Karma"]]},
- {g:"Hip-hop", r:[["Nas","Illmatic"],["A Tribe Called Quest","The Low End Theory"],["Madvillain","Madvillainy"],["J Dilla","Donuts"],["De La Soul","3 Feet High and Rising"],["IAM","L'École du micro d'argent"]]},
- {g:"Reggae", r:[["Bob Marley & The Wailers","Exodus"],["Augustus Pablo","King Tubbys Meets Rockers Uptown"],["Burning Spear","Marcus Garvey"],["Lee Perry & The Upsetters","Super Ape"],["Toots & The Maytals","Funky Kingston"],["Horace Andy","Skylarking"]]},
- {g:"Brazil", r:[["Jorge Ben","Samba Esquema Novo"],["Elis Regina & Tom Jobim","Elis & Tom"],["Caetano Veloso","Transa"],["Os Mutantes","Os Mutantes"],["Milton Nascimento","Clube da Esquina"],["Arthur Verocai","Arthur Verocai"]]}
-];
 // crate centres in the rack photo, as fractions of its width (measured on the photo)
 var CENTRES = [0.0875, 0.25, 0.4075, 0.57, 0.735, 0.905];
 var BOUNDS = [0, 0.168, 0.328, 0.488, 0.652, 0.82, 1];
@@ -286,7 +279,7 @@ function openCrate(i) {
     s.innerHTML = '<div class="face"><div class="a"></div><div class="t"></div></div>';
     s.querySelector('.a').textContent = rec[0]; s.querySelector('.t').textContent = rec[1];
     s.addEventListener('click', function () { if (Math.round(pos) !== k) { pos = k; layout(); } });
-    stack.appendChild(s); rec.el = s; cover(rec);
+    stack.appendChild(s); rec.el = s;
   });
   stage.classList.add('open'); layout();
 }
@@ -302,6 +295,7 @@ function layout() {
     rec.el.style.transform = 'translate3d(0,' + y + 'px,' + z + 'px) rotateX(' + rot + 'deg)';
     rec.el.style.zIndex = String(1000 - Math.round(Math.abs(d) * 10) + (d < 0 ? 500 : 0));
     rec.el.style.opacity = op;
+    if (Math.abs(d) < 5 && !rec.req) { rec.req = true; cover(rec); }
   });
   var rec = c.r[Math.max(0, Math.min(n - 1, Math.round(pos)))];
   document.getElementById('pick-title').textContent = rec[1];

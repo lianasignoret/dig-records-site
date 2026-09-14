@@ -1,6 +1,6 @@
 # Dig Records, the shop's site
 
-Two static pages (`index.html`, and `story.html` for Laurent's story), French first with an English toggle, in the Dig brand. Filled in (2026-09-14): 7 rue Hoche, 35000 Rennes; Tue–Sat 11:00–19:00 (Mon and Sun closed, to confirm);
+Two static pages (`index.html`, and `story.html` for Laurent's story) plus `crates.js`, the six crates of fifty records each that the crate effect flips through (edit that file to change them), French first with an English toggle, in the Dig brand. Filled in (2026-09-14): 7 rue Hoche, 35000 Rennes; Tue–Sat 11:00–19:00 (Mon and Sun closed, to confirm);
 contact@digrecords.fr; the interview credit (World Records, Volume Two, Iain Wakefield, 2024). No legal notice by choice. Portrait on the story page is `laurent-portrait.jpg`. Edit the HTML directly; the copy is inline next to its
 English twin (`data-fr` / `data-en` spans).
 
