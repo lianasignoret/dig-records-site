@@ -292,9 +292,10 @@ function layout() {
   stack.style.fontSize = (w / 12) + 'px';
   c.r.forEach(function (rec, k) {
     var d = k - pos, z, y, rot, op = 1;
+    var sc = 1;
     if (d >= 0) { z = -d * (w * 0.028); y = -d * (w * 0.006); rot = 30; op = 1; } // standing sleeves lean back like the photo's, packed to the back of the crate
-    else { var f = Math.min(1, -d); rot = 30 - 58 * f; z = w * 0.05 * f - (-d - f) * w * 0.01; y = 0; op = 1; } // flipped sleeves lean on the front of the crate
-    rec.el.style.transform = 'translate3d(0,' + y + 'px,' + z + 'px) rotateX(' + rot + 'deg)';
+    else { var f = Math.min(1, -d); rot = 30 - 88 * f; z = 0; y = w * 0.04 * f; sc = 1 - 0.24 * f; op = 1; } // flipped sleeves lie forward on the front of the crate, only their tops showing above the card; scaled so the leaning top edge stays inside the crate
+    rec.el.style.transform = 'translate3d(0,' + y + 'px,' + z + 'px) rotateX(' + rot + 'deg) scale(' + sc + ')';
     rec.el.style.zIndex = String(1000 - Math.round(Math.abs(d) * 10) + (d < 0 ? 500 : 0));
     rec.el.style.opacity = op;
     if (Math.abs(d) < 5 && !rec.req) { rec.req = true; cover(rec); }
