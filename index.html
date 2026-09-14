@@ -29,6 +29,12 @@
   .lang .ig:hover { color:var(--accent); text-decoration:none; }
   .lang button { font:inherit; font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; border:1px solid #cfc8b6; background:transparent; color:#444; cursor:pointer; }
   .lang button.on { background:#111; color:#F2EFE8; border-color:#111; }
+  @media (max-width:640px) {
+    header .wrap { height:auto; flex-wrap:wrap; padding-top:12px; padding-bottom:10px; row-gap:8px; }
+    header .logo { order:1; } header .lang { order:2; margin-left:auto; }
+    nav { order:3; width:100%; gap:16px; font-size:13px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    nav::-webkit-scrollbar { display:none; }
+  }
   section { padding:56px 0; border-bottom:1px solid var(--line); }
   section.first { padding-top:0; }
   .kicker { font-size:11px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
@@ -42,6 +48,7 @@
   .btn:hover { text-decoration:none; opacity:.9; }
   .hero { padding-top:56px; padding-bottom:40px; border-bottom:0; }
   .hero .open { font-size:15px; color:var(--ink2); margin-bottom:28px; }
+  .hero .row { display:flex; flex-wrap:wrap; gap:8px; }
   .hero .fifty { font-size:22px; color:var(--ink); letter-spacing:-.3px; margin:0 0 28px; }
   .photo { width:100%; aspect-ratio:1; background:var(--surface); margin-top:40px; display:flex; align-items:center; justify-content:center; color:var(--ink3); font-size:13px; overflow:hidden; }
   .photo img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -143,8 +150,7 @@
       <div class="kicker"><span data-fr>Disquaire indépendant et éclectique, à Rennes</span><span data-en>An eclectic independent record store in Rennes</span></div>
       <h1><span data-fr>Deep beats &amp; warm vibes, pour le corps et pour l'âme, sur du vinyle original.</span><span data-en>Deep beats &amp; warm vibes for your body &amp; your soul on original glorious vinyl.</span></h1>
       <div class="open"><span data-fr>Pour les vinyl heads qui creusent plus loin.</span><span data-en>For the vinyl heads who dig deeper.</span></div>
-      <a class="btn" href="#visite"><span data-fr>Ouverture prochaine</span><span data-en>Coming soon</span></a>
-      <a class="btn secondary" href="https://instagram.com/dig_records" target="_blank" rel="noopener" style="margin-left:8px">@dig_records</a>
+      <div class="row"><a class="btn" href="#visite"><span data-fr>Ouverture prochaine</span><span data-en>Coming soon</span></a><a class="btn secondary" href="https://instagram.com/dig_records" target="_blank" rel="noopener">@dig_records</a></div>
     </div>
   </section>
 
@@ -181,7 +187,7 @@
       <p class="lead"><span data-fr>Collections entières, disques à l'unité, successions. Venez avec les disques ou envoyez une liste.</span><span data-en>Whole collections, single records, estates. Come with the records or send a list.</span></p>
       <p><span data-fr>On se déplace pour les grosses collections en Bretagne.</span><span data-en>We travel for large collections in Brittany.</span></p>
       <!-- Formspree: create a form at formspree.io and put its endpoint in `action`. -->
-      <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" id="buy-form">
         <label><span data-fr>Nom</span><span data-en>Name</span><input name="name" required></label>
         <label><span data-fr>Email ou téléphone</span><span data-en>Email or phone</span><input name="contact" required></label>
         <label><span data-fr>Combien de disques, environ</span><span data-en>Roughly how many records</span>
@@ -255,6 +261,14 @@
 {"@context":"https://schema.org","@type":"MusicStore","name":"DIG RECORDS","description":"An eclectic record store for the vinyl heads who dig deeper. Original vinyl, bought and sold.","address":{"@type":"PostalAddress","streetAddress":"7 rue Hoche","postalCode":"35000","addressLocality":"Rennes","addressCountry":"FR"},"geo":{"@type":"GeoCoordinates","latitude":48.11342,"longitude":-1.67738},"openingHours":["Tu-Sa 11:00-19:00"],"email":"contact@digrecords.fr","url":"https://digrecords.fr","sameAs":["https://instagram.com/dig_records"],"founder":{"@type":"Person","name":"Laurent"}}
 </script>
 <script>
+  // Until the Formspree endpoint above is real, sending the form opens an email to the shop with the answers in it.
+  document.getElementById('buy-form').addEventListener('submit', function (e) {
+    var f = e.target; if (f.action.indexOf('YOUR_FORM_ID') < 0) return;
+    e.preventDefault();
+    var fr = document.documentElement.lang === 'fr';
+    var lines = [(fr ? 'Nom' : 'Name') + ': ' + f.name.value, (fr ? 'Contact' : 'Contact') + ': ' + f.contact.value, (fr ? 'Nombre de disques' : 'How many records') + ': ' + f.count.value, 'Genres: ' + f.genres.value, '', f.message.value];
+    location.href = 'mailto:contact@digrecords.fr?subject=' + encodeURIComponent(fr ? 'Disques à vendre' : 'Records to sell') + '&body=' + encodeURIComponent(lines.join('\n'));
+  });
   function setLang(l) {
     document.documentElement.setAttribute('lang', l);
     document.getElementById('l-fr').classList.toggle('on', l === 'fr');
@@ -395,14 +409,20 @@ function pump() {
   if (inflight >= 2 || !coverQueue.length) return;
   coverQueue.sort(function (a, b) { return a.d - b.d; });
   var job = coverQueue.shift(); inflight++;
-  cover(job.rec).then(function () { inflight--; setTimeout(pump, 150); });
+  cover(job.rec).then(function (ok) {
+    inflight--;
+    if (!ok && !job.retried) setTimeout(function () { coverQueue.push({rec: job.rec, d: job.d + 20, retried: true}); pump(); }, 4000); // Apple throttles bursts: one more try, later
+    setTimeout(pump, 150);
+  });
 }
 function cover(rec) {
   return fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(rec[0] + ' ' + rec[1]) + '&entity=album&limit=1&country=FR').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-    var u = j && j.results && j.results[0] && j.results[0].artworkUrl100; if (!u) return;
+    if (!j) return false;
+    var u = j.results && j.results[0] && j.results[0].artworkUrl100; if (!u) return true; // nothing in the catalogue: leave it cream
     var img = new Image(); img.alt = ''; img.src = u.replace('100x100bb', '600x600bb');
     img.onload = function () { var f = rec.el.querySelector('.face'); f.insertBefore(img, f.firstChild); f.classList.add('img'); };
-  }).catch(function () {});
+    return true;
+  }).catch(function () { return false; });
 }
 </script>
 </body>
