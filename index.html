@@ -66,6 +66,8 @@
   input, textarea, select { font:inherit; font-size:16px; padding:12px 16px; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:999px; }
   textarea { border-radius:18px; min-height:110px; resize:vertical; }
   button.btn { border:0; cursor:pointer; font:inherit; font-weight:600; }
+  form .sent { color:var(--ink); margin:4px 0 0; }
+  form .sent.err { color:var(--accent); }
   .qa { border-top:1px solid var(--line); margin-top:24px; max-width:var(--content); }
   .qa dt { color:var(--accent); font-weight:600; margin:22px 0 6px; }
   .qa dd { margin:0; color:var(--ink2); max-width:var(--content); }
@@ -196,6 +198,8 @@
         <label><span data-fr>Genres</span><span data-en>Genres</span><input name="genres"></label>
         <label>Message<textarea name="message"></textarea></label>
         <button class="btn" type="submit"><span data-fr>Envoyer</span><span data-en>Send</span></button>
+        <p class="sent" id="buy-sent" hidden><span data-fr>Merci, c'est envoyé. Laurent vous répond vite.</span><span data-en>Thank you, it is on its way. Laurent will get back to you soon.</span></p>
+        <p class="sent err" id="buy-err" hidden><span data-fr>L'envoi n'a pas marché. Écrivez-nous à <a href="mailto:contact@digrecords.fr">contact@digrecords.fr</a>.</span><span data-en>Sending failed. Write to us at <a href="mailto:contact@digrecords.fr">contact@digrecords.fr</a>.</span></p>
       </form>
     </div>
   </section>
@@ -262,13 +266,22 @@
 {"@context":"https://schema.org","@type":"MusicStore","name":"DIG RECORDS","description":"An eclectic record store for the vinyl heads who dig deeper. Original vinyl, bought and sold.","address":{"@type":"PostalAddress","streetAddress":"7 rue Hoche","postalCode":"35000","addressLocality":"Rennes","addressCountry":"FR"},"geo":{"@type":"GeoCoordinates","latitude":48.11342,"longitude":-1.67738},"openingHours":["Tu-Sa 11:00-19:00"],"email":"contact@digrecords.fr","url":"https://digrecords.fr","sameAs":["https://instagram.com/dig_records"],"founder":{"@type":"Person","name":"Laurent"}}
 </script>
 <script>
-  // Until the Formspree endpoint above is real, sending the form opens an email to the shop with the answers in it.
+  // The buy form posts to the endpoint in its `action` (Formspree, or the site's own /api/buy) without leaving the
+  // page, then shows a thank-you. Until an endpoint is set, sending opens an email to the shop with the answers in it.
   document.getElementById('buy-form').addEventListener('submit', function (e) {
-    var f = e.target; if (f.action.indexOf('YOUR_FORM_ID') < 0) return;
     e.preventDefault();
-    var fr = document.documentElement.lang === 'fr';
-    var lines = [(fr ? 'Nom' : 'Name') + ': ' + f.name.value, (fr ? 'Contact' : 'Contact') + ': ' + f.contact.value, (fr ? 'Nombre de disques' : 'How many records') + ': ' + f.count.value, 'Genres: ' + f.genres.value, '', f.message.value];
-    location.href = 'mailto:contact@digrecords.fr?subject=' + encodeURIComponent(fr ? 'Disques à vendre' : 'Records to sell') + '&body=' + encodeURIComponent(lines.join('\n'));
+    var f = e.target, fr = document.documentElement.lang === 'fr', btn = f.querySelector('button');
+    var data = { name: f.name.value, contact: f.contact.value, count: f.count.value, genres: f.genres.value, message: f.message.value, _subject: fr ? 'Disques à vendre' : 'Records to sell', _language: fr ? 'fr' : 'en' };
+    if (f.action.indexOf('YOUR_FORM_ID') >= 0) {
+      var lines = [(fr ? 'Nom' : 'Name') + ': ' + data.name, 'Contact: ' + data.contact, (fr ? 'Nombre de disques' : 'How many records') + ': ' + data.count, 'Genres: ' + data.genres, '', data.message];
+      location.href = 'mailto:contact@digrecords.fr?subject=' + encodeURIComponent(data._subject) + '&body=' + encodeURIComponent(lines.join('\n'));
+      return;
+    }
+    btn.disabled = true;
+    fetch(f.action, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(data) })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); f.reset(); document.getElementById('buy-sent').hidden = false; document.getElementById('buy-err').hidden = true; })
+      .catch(function () { document.getElementById('buy-err').hidden = false; })
+      .then(function () { btn.disabled = false; });
   });
   function setLang(l) {
     document.documentElement.setAttribute('lang', l);
