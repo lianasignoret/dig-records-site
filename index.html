@@ -85,14 +85,13 @@
   .stage .close { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.92); opacity:0; pointer-events:none; transition:opacity .45s ease .15s; }
   .stage.open .close { opacity:1; pointer-events:auto; }
   .close .backdrop { position:absolute; inset:-40px; background-size:cover; background-position:center; filter:blur(28px) brightness(.55); }
-  .close .photo-wrap { position:absolute; left:50%; top:50%; height:min(92vh, 92vw); aspect-ratio:1; transform:translate(-50%,-50%) scale(.9); box-shadow:0 0 80px rgba(0,0,0,.8); transition:transform .5s cubic-bezier(.2,.8,.2,1) .1s; }
+  .close .photo-wrap { position:absolute; overflow:hidden; left:50%; top:50%; height:min(92vh, 92vw); aspect-ratio:1; transform:translate(-50%,-50%) scale(.9); box-shadow:0 0 80px rgba(0,0,0,.8); transition:transform .5s cubic-bezier(.2,.8,.2,1) .1s; }
   .stage.open .close .photo-wrap { transform:translate(-50%,-50%) scale(1); }
   .close .photo-wrap img.bg { position:absolute; inset:0; width:100%; height:100%; display:block; }
   /* the divider card: a cream label in a marker hand over the photo's own card, for the other five genres */
   .close .front { position:absolute; left:0; right:0; top:60%; bottom:0; background-size:100% auto; background-position:0 100%; z-index:3; }
   .close .card { position:absolute; z-index:4; left:9.7%; width:82.2%; top:60.1%; height:10.9%; background:#ece6d8; box-shadow:inset 0 -6px 12px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; font-family:"Permanent Marker", "Marker Felt", "Comic Sans MS", cursive; font-size:calc(min(92vh, 92vw) * .085); color:#111; letter-spacing:.06em; }
-  .close .stack, .close .ghosts { position:absolute; z-index:2; left:18.4%; width:68.8%; top:78.4%; height:22.4%; perspective:1100px; perspective-origin:50% -40%; }
-  .close .ghosts { z-index:5; pointer-events:none; perspective:2400px; perspective-origin:50% 20%; }
+  .close .stack { position:absolute; z-index:2; left:18.4%; width:68.8%; top:78.4%; height:22.4%; perspective:2000px; perspective-origin:50% 10%; }
   .close .sleeve { position:absolute; left:0; width:100%; bottom:0; aspect-ratio:1; transform-origin:50% 100%; transform-style:preserve-3d; will-change:transform; }
   .close .sleeve .face { position:absolute; inset:0; background:var(--c,#e9e2d0); color:var(--t,#111); box-shadow:0 0 0 1px rgba(0,0,0,.35), 0 18px 30px rgba(0,0,0,.5); display:flex; flex-direction:column; justify-content:flex-end; padding:5%; box-sizing:border-box; overflow:hidden; backface-visibility:hidden; }
   .close .sleeve .face img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
@@ -146,7 +145,6 @@
             <div class="front" id="front"></div>
             <div class="card" id="card"></div>
             <div class="stack" id="stack"></div>
-            <div class="ghosts" id="ghosts"></div>
           </div>
           <div class="ui"><span class="hint"><span data-fr>Tirez le disque vers vous, ou cliquez, pour feuilleter</span><span data-en>Pull the record towards you, or click, to flip through</span></span><button type="button" id="back"><span data-fr>Refermer</span><span data-en>Close</span></button></div>
           <div class="name"><b id="pick-title"></b><small id="pick-meta"></small></div>
@@ -263,7 +261,7 @@ var CENTRES = [0.0875, 0.25, 0.4075, 0.57, 0.735, 0.905];
 var BOUNDS = [0, 0.168, 0.328, 0.488, 0.652, 0.82, 1];
 var PALETTE = [["#e9e2d0","#111"],["#e3dbc7","#111"],["#eee8da","#111"],["#dcd3bd","#111"],["#e6dfcc","#111"],["#d5cbb3","#111"]];
 document.getElementById('backdrop').style.backgroundImage = document.getElementById('front').style.backgroundImage = 'url(' + JSON.stringify(document.querySelector('#close img.bg').getAttribute('src')) + ')';
-var stage = document.getElementById('stage'), rackEl = stage.querySelector('.rack'), hots = document.getElementById('hots'), stack = document.getElementById('stack'), ghosts = document.getElementById('ghosts');
+var stage = document.getElementById('stage'), rackEl = stage.querySelector('.rack'), hots = document.getElementById('hots'), stack = document.getElementById('stack');
 var cur = -1, pos = 0, dragging = false, y0 = 0, p0 = 0, yLast = 0, tLast = 0, vy = 0, moved = 0, anim = null, downOn = null;
 // Same motion as the box in the Dig app (src/components/dig-box.tsx): one value, `pos`, the fractional index of the
 // record at the front. Pull the front record towards you (drag down) and it tips about its bottom edge and drops
@@ -281,14 +279,13 @@ function openCrate(i) {
   rackEl.style.transformOrigin = (CENTRES[i] * 100) + '% 62%';
   document.getElementById('card').textContent = CRATES[i].g.toUpperCase();
   document.getElementById('card').style.visibility = i === 0 ? 'hidden' : 'visible'; // the photo's own card already says SOUL
-  stack.innerHTML = ''; ghosts.innerHTML = '';
+  stack.innerHTML = '';
   CRATES[i].r.forEach(function (rec, k) {
     var p = PALETTE[(k + i) % PALETTE.length];
     var s = document.createElement('div'); s.className = 'sleeve'; s.style.setProperty('--c', p[0]); s.style.setProperty('--t', p[1]);
     s.innerHTML = '<div class="face"><div class="a"></div><div class="t"></div></div>';
     s.querySelector('.a').textContent = rec[0]; s.querySelector('.t').textContent = rec[1];
     stack.appendChild(s); rec.el = s; rec.req = false;
-    var g = s.cloneNode(true); g.style.opacity = 0; ghosts.appendChild(g); rec.gel = g; // its twin above the crate front, drawn only while it tips out
   });
   stage.classList.add('open'); layout();
 }
@@ -299,13 +296,12 @@ function layout() {
   stack.style.fontSize = (w / 12) + 'px';
   c.r.forEach(function (rec, k) {
     var d = k - pos, tf, op = 1, dim = 0;
-    if (d < 0) { // on its way out: its ghost, above the crate front, tips towards you about its bottom edge and drops
+    if (d < 0) { // on its way out: tips towards you about its bottom edge, inside the crate, and slips behind the card
       var f = Math.min(1, -d);
-      rec.el.style.opacity = 0;
-      rec.gel.style.transform = 'translate3d(0,' + (f * w * 0.55) + 'px,0) rotateX(' + (-TIP_DEG * f) + 'deg)';
-      rec.gel.style.opacity = d <= -1 ? 0 : 1; rec.gel.style.zIndex = String(1500 + Math.round(d * 10));
-      dim = f < 0.6 ? 0 : (f - 0.6) / 0.4 * 0.9;
-      rec.gel.firstChild.style.filter = dim ? 'brightness(' + (1 - dim).toFixed(2) + ')' : '';
+      rec.el.style.transform = 'translate3d(0,' + (f * w * 0.12) + 'px,0) rotateX(' + (-TIP_DEG * f) + 'deg)';
+      rec.el.style.opacity = d <= -1 ? 0 : 1; rec.el.style.zIndex = String(1500 + Math.round(d * 10));
+      dim = f < 0.5 ? 0 : (f - 0.5) * 1.4;
+      rec.el.firstChild.style.filter = dim ? 'brightness(' + (1 - dim).toFixed(2) + ')' : '';
     } else { // at the front, or peeking out behind it
       var q = Math.min(d, BEHIND + 1);
       tf = 'translate3d(0,' + (-q * w * 0.028) + 'px,0) scale(' + (1 - 0.035 * q) + ')';
@@ -313,7 +309,6 @@ function layout() {
       rec.el.style.transform = tf; rec.el.style.opacity = op;
       rec.el.style.zIndex = String(1000 - Math.round(d * 10));
       rec.el.firstChild.style.filter = dim ? 'brightness(' + (1 - dim).toFixed(2) + ')' : '';
-      rec.gel.style.opacity = 0;
     }
     if (Math.abs(d) < 5 && !rec.req) { rec.req = true; cover(rec); }
   });
@@ -371,7 +366,7 @@ function cover(rec) {
   fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(rec[0] + ' ' + rec[1]) + '&entity=album&limit=1&country=FR').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
     var u = j && j.results && j.results[0] && j.results[0].artworkUrl100; if (!u) return;
     var img = new Image(); img.alt = ''; img.src = u.replace('100x100bb', '600x600bb');
-    img.onload = function () { [rec.el, rec.gel].forEach(function (el, i) { var f = el.querySelector('.face'); f.insertBefore(i ? img.cloneNode() : img, f.firstChild); f.classList.add('img'); }); };
+    img.onload = function () { var f = rec.el.querySelector('.face'); f.insertBefore(img, f.firstChild); f.classList.add('img'); };
   }).catch(function () {});
 }
 </script>
