@@ -4,8 +4,8 @@ Two static pages (`index.html`, and `story.html` for Laurent's story) plus `crat
 contact@digrecords.fr; the interview credit (World Records, Volume Two, Iain Wakefield, 2024). No legal notice by choice. Portrait on the story page is `laurent-portrait.jpg`. Edit the HTML directly; the copy is inline next to its
 English twin (`data-fr` / `data-en` spans).
 
-To do before it goes live: replace the remaining placeholders, drop a portrait on `story.html` (replace the `.photo`
-box with `<img>`), create a Formspree form and paste its endpoint in the form's `action`.
+The buy form posts to Formspree (`https://formspree.io/f/xgavnkvg`, Laurent's account, set 2026-09-26); submissions are
+emailed to him and kept in his Formspree dashboard.
 
 Published from Lovable at **https://dig-crates-rennes.lovable.app/** (project "DIG Records Launch", repo
 `lianasignoret/dig-records-launch`, 2026-09-14). There the page is served as is by `src/routes/index.tsx` and
